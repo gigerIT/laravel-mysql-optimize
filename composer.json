@@ -1,0 +1,39 @@
+{
+    "name": "gigerit/laravel-mysql-optimizer",
+    "type": "library",
+    "description": "A laravel package that optimizes mysql database tables.",
+    "keywords": ["database","laravel","optimize","mysql","table"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "gigerIT",
+            "role": "Author"
+        }
+    ],
+    "require": {
+        "illuminate/console": "^8.0|^9.0|^10.0|^11.0|^12.0",
+        "illuminate/database": "^8.0|^9.0|^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+
+    },
+    "autoload": {
+        "psr-4": {
+            "MySQLOptimizer\\":"src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MySQLOptimizer\\ServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
