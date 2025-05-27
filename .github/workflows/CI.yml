@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Test:
+  #   runs-on: ubuntu-latest
+  #   if: "!contains(github.event.head_commit.message, 'chore(main): release')"  # Skip test job if it's a release commit
+
+  #   steps:
+  #     - name: Setup PHP
+  #       uses: shivammathur/setup-php@v2
+  #       with:
+  #         php-version: 8.3
+  #         coverage: none
+
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Install dependencies
+  #       uses: ramsey/composer-install@v3
+  #       with:
+  #         composer-options: --prefer-dist
+
+  #     - name: Run Tests
+  #       env:
+  #       run: php vendor/bin/pest --colors=always -v --parallel --processes=6
+
+  Release:
+    needs: [Test]
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'chore(main): release') || success()"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: php
+          token: ${{ secrets.GITHUB_TOKEN }}
