@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.0.0...v1.1.0) (2025-05-27)
+
+
+### Features
+
+* queueable optimization ([f63c729](https://github.com/gigerIT/laravel-mysql-optimize/commit/f63c7298fbf47f954158be6685ee2aacf55b53d6))
+
 ## 1.0.0 (2025-05-27)
 
 
