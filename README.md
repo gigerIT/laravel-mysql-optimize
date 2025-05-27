@@ -8,6 +8,7 @@ A Laravel package that optimizes MySQL database tables by reorganizing data and 
 ## Why Use This Package?
 
 MySQL's `OPTIMIZE TABLE` statement reorganizes tables and compacts wasted space, resulting in:
+
 - **Faster queries** through improved data packing and reduced fragmentation
 - **Less disk I/O** for full table scans
 - **Reduced storage footprint** through better space utilization
@@ -23,6 +24,7 @@ composer require gigerit/laravel-mysql-optimizer
 ## Quick Start
 
 Optimize all tables in your default database:
+
 ```bash
 php artisan db:optimize
 ```
@@ -30,6 +32,7 @@ php artisan db:optimize
 ## Configuration
 
 Publish the configuration file to customize settings:
+
 ```bash
 php artisan vendor:publish --provider="MySQLOptimizer\ServiceProvider" --tag=config
 ```
@@ -39,16 +42,19 @@ The package uses your `DB_DATABASE` environment variable by default.
 ## Usage Examples
 
 ### Optimize Specific Database
+
 ```bash
 php artisan db:optimize --database=my_custom_db
 ```
 
 ### Optimize Specific Tables
+
 ```bash
 php artisan db:optimize --table=users --table=orders
 ```
 
 ### Combine Options
+
 ```bash
 php artisan db:optimize --database=analytics --table=user_events --table=page_views
 ```
@@ -56,6 +62,7 @@ php artisan db:optimize --database=analytics --table=user_events --table=page_vi
 ## Exception Handling
 
 The package throws specific exceptions for invalid arguments:
+
 - `MySQLOptimizer\Exceptions\DatabaseNotFoundException`
 - `MySQLOptimizer\Exceptions\TableNotFoundException`
 
@@ -75,12 +82,14 @@ composer test
 ## Contributing
 
 We welcome contributions! Please see:
+
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Standards
 
 This package follows:
+
 - [PSR-4 Autoloading](https://www.php-fig.org/psr/psr-4/)
 - [PSR-2 Coding Style](https://www.php-fig.org/psr/psr-2/)
 - [PSR-1 Basic Coding Standard](https://www.php-fig.org/psr/psr-1/)
@@ -91,10 +100,9 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ## Credits
 
-Forked and maintained by [gigerIT]
-Created by [Zak Rahman](https://github.com/zakriyarahman)
+Updated, Extenden & Maintained by [gigerIT](https://github.com/gigerIT)
+Original for Laravel 8 Created by [Zak Rahman](https://github.com/zakriyarahman)
 
 ---
 
 💡 **Pro Tip**: Schedule regular optimizations using Laravel's task scheduler for automated maintenance.
-
