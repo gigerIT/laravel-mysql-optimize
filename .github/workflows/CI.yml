@@ -34,7 +34,7 @@ jobs:
   #       run: php vendor/bin/pest --colors=always -v --parallel --processes=6
 
   Release:
-    needs: [Test]
+    # needs: [Test]
     runs-on: ubuntu-latest
     if: "contains(github.event.head_commit.message, 'chore(main): release') || success()"
     steps:
