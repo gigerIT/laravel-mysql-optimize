@@ -1,8 +1,5 @@
 # Laravel MySQL Optimizer
 
-[![Latest Version](https://img.shields.io/packagist/v/gigerit/laravel-mysql-optimizer.svg)](https://packagist.org/packages/gigerit/laravel-mysql-optimizer)
-[![License](https://img.shields.io/packagist/l/gigerit/laravel-mysql-optimizer.svg)](https://packagist.org/packages/gigerit/laravel-mysql-optimizer)
-
 A Laravel package that optimizes MySQL database tables by reorganizing data and rebuilding indexes to improve performance and reduce disk usage.
 
 ## Why Use This Package?
