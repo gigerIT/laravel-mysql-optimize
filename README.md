@@ -51,34 +51,6 @@ php artisan db:optimize --table=users --table=posts --queued
 php artisan db:optimize --queued --no-log
 ```
 
-### Using the Action Class Directly
-
-```php
-use MySQLOptimizer\Actions\OptimizeTablesAction;
-use Illuminate\Database\Query\Builder;
-
-// Create the action
-$builder = app(Builder::class);
-$action = new OptimizeTablesAction($builder);
-
-// Get table count before optimization
-$count = $action->getTableCount('my_database', ['users', 'posts']);
-
-// Execute optimization with progress callback
-$results = $action->execute(
-    'my_database',
-    ['users', 'posts'],
-    function ($table, $success) {
-        echo "Optimizing {$table}: " . ($success ? 'SUCCESS' : 'FAILED') . "\n";
-    }
-);
-
-// Process results
-foreach ($results as $result) {
-    echo "Table: {$result['table']}, Success: " . ($result['success'] ? 'Yes' : 'No') . "\n";
-}
-```
-
 ### Using the Job Directly
 
 ```php
@@ -94,6 +66,30 @@ OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
 // Dispatch with delay
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
     ->delay(now()->addMinutes(5));
+```
+
+### Scheduling Optimization
+
+Add to your `app/Console/Kernel.php` to schedule regular optimizations:
+
+```php
+protected function schedule(Schedule $schedule)
+{
+    // Optimize all tables as Queued Job weekly on Sunday at 2 AM
+    $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob()->weekly()->sundays()->at('02:00');
+
+    // Optimize specific high-traffic tables as Queued Job daily at 3 AM
+    $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob(
+        config('database.default'), 
+        ['users', 'orders', 'products']
+    ))->daily()->at('03:00');
+
+    // Alternative: Use the console command to Optimize Synchronously
+    $schedule->command('db:optimize --queued')
+        ->weekly()
+        ->sundays()
+        ->at('02:00');
+}
 ```
 
 ## Configuration
