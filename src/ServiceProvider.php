@@ -22,7 +22,9 @@ class ServiceProvider extends AbstractServiceProvider
      */
     public function register(): void
     {
-        $this->commands([Command::class]);
+        $this->commands([
+            Command::class,
+        ]);
     }
 
     /**

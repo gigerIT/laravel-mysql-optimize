@@ -1,6 +1,6 @@
-# Laravel MySQL Optimizer
+# MySQL Optimizer
 
-A Laravel package that optimizes MySQL database tables by reorganizing data and rebuilding indexes to improve performance and reduce disk usage.
+A Laravel package for optimizing MySQL database tables with support for both synchronous and asynchronous execution.
 
 ## Why Use This Package?
 
@@ -14,47 +14,109 @@ Perfect for tables with frequent `INSERT`, `UPDATE`, and `DELETE` operations.
 
 ## Installation
 
-```bash
-composer require gigerit/laravel-mysql-optimizer
+Add the service provider to your `config/app.php`:
+
+```php
+'providers' => [
+    // ...
+    MySQLOptimizer\ServiceProvider::class,
+];
 ```
 
-## Quick Start
+## Usage
 
-Optimize all tables in your default database:
+### Console Commands
 
+#### Synchronous Optimization
 ```bash
+# Optimize all tables in the default database
 php artisan db:optimize
+
+# Optimize specific tables
+php artisan db:optimize --table=users --table=posts
+
+# Optimize specific database
+php artisan db:optimize --database=my_database
+```
+
+#### Asynchronous Optimization (Queued)
+```bash
+# Queue optimization for all tables
+php artisan db:optimize --queued
+
+# Queue optimization for specific tables
+php artisan db:optimize --table=users --table=posts --queued
+
+# Queue optimization with logging disabled
+php artisan db:optimize --queued --no-log
+```
+
+### Using the Action Class Directly
+
+```php
+use MySQLOptimizer\Actions\OptimizeTablesAction;
+use Illuminate\Database\Query\Builder;
+
+// Create the action
+$builder = app(Builder::class);
+$action = new OptimizeTablesAction($builder);
+
+// Get table count before optimization
+$count = $action->getTableCount('my_database', ['users', 'posts']);
+
+// Execute optimization with progress callback
+$results = $action->execute(
+    'my_database',
+    ['users', 'posts'],
+    function ($table, $success) {
+        echo "Optimizing {$table}: " . ($success ? 'SUCCESS' : 'FAILED') . "\n";
+    }
+);
+
+// Process results
+foreach ($results as $result) {
+    echo "Table: {$result['table']}, Success: " . ($result['success'] ? 'Yes' : 'No') . "\n";
+}
+```
+
+### Using the Job Directly
+
+```php
+use MySQLOptimizer\Jobs\OptimizeTablesJob;
+
+// Dispatch optimization job
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true);
+
+// Dispatch to specific queue
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
+    ->onQueue('database-optimization');
+
+// Dispatch with delay
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
+    ->delay(now()->addMinutes(5));
 ```
 
 ## Configuration
 
-Publish the configuration file to customize settings:
+Create a config file `config/mysql-optimizer.php`:
 
-```bash
-php artisan vendor:publish --provider="MySQLOptimizer\ServiceProvider" --tag=config
+```php
+<?php
+
+return [
+    'database' => env('DB_DATABASE', 'mysql'),
+];
 ```
 
-The package uses your `DB_DATABASE` environment variable by default.
+## Features
 
-## Usage Examples
-
-### Optimize Specific Database
-
-```bash
-php artisan db:optimize --database=my_custom_db
-```
-
-### Optimize Specific Tables
-
-```bash
-php artisan db:optimize --table=users --table=orders
-```
-
-### Combine Options
-
-```bash
-php artisan db:optimize --database=analytics --table=user_events --table=page_views
-```
+- **Action-based architecture**: Reusable optimization logic
+- **Progress tracking**: Real-time progress updates during optimization
+- **Queueable jobs**: Background processing for large datasets
+- **Flexible table selection**: Optimize all tables or specific ones
+- **Database validation**: Ensures databases and tables exist before optimization
+- **Comprehensive logging**: Track optimization results and failures
+- **Error handling**: Graceful handling of optimization failures
 
 ## Exception Handling
 

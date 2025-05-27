@@ -4,13 +4,26 @@ namespace MySQLOptimizer\Console\Commands;
 
 use Illuminate\Console\Command as BaseCommand;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
-use MySQLOptimizer\Exceptions\DatabaseNotFoundException;
-use MySQLOptimizer\Exceptions\TableNotFoundException;
-use Exception;
+use Symfony\Component\Console\Helper\ProgressBar;
+use MySQLOptimizer\Actions\OptimizeTablesAction;
+use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
 class Command extends BaseCommand
 {
+    /**
+     * The database query builder instance.
+     *
+     * @var Builder
+     */
+    protected Builder $db;
+
+    /**
+     * The progress bar instance.
+     *
+     * @var ProgressBar
+     */
+    protected ProgressBar $progress;
+
     /**
      * The console command description.
      *
@@ -32,7 +45,9 @@ class Command extends BaseCommand
      */
     protected $signature = 'db:optimize
                         {--database=default : Default database is set in the config. Database that needs to be optimized.}
-                        {--table=* : Defaulting to all tables in the default database.}';
+                        {--table=* : Defaulting to all tables in the default database.}
+                        {--queued : Queue the optimization job instead of running synchronously}
+                        {--no-log : Disable logging when using queue option}';
 
     /**
      * Construct
@@ -52,100 +67,76 @@ class Command extends BaseCommand
      */
     public function handle(): void
     {
-        $this->info('Starting Optimization.');
-        $this->getTables()
-            ->tap(function($collection) {
-                $this->progress = $this->output->createProgressBar($collection->count());
-            })
-            ->each(fn($table) => $this->optimize($table));
-        $this->info(PHP_EOL.'Optimization Completed');
-    }
-
-    /**
-     * Get database which need optimization
-     *
-     * @return string
-     */
-    protected function getDatabase(): string
-    {
         $database = $this->option('database');
-        if ($database == 'default') {
-            return config('mysql-optimizer.database');
+        $tables = $this->option('table');
+        $isQueued = $this->option('queued');
+        $shouldLog = !$this->option('no-log');
+
+        if ($isQueued) {
+            $this->handleQueuedOptimization($database, $tables, $shouldLog);
+        } else {
+            $this->handleSynchronousOptimization($database, $tables);
         }
-        // Check if the database exists
-        if (is_string($database) && $this->existsDatabase($database)) {
-            return $database;
-        }
-        throw new DatabaseNotFoundException("This database {$database} doesn't exists.");
     }
 
     /**
-     * Check if the database exists
+     * Handle queued optimization
      *
-     * @param  string $databaseName
-     * @return bool
-     */
-    private function existsDatabase(string &$databaseName): bool
-    {
-        return $this->db
-                    ->newQuery()
-                    ->selectRaw('SCHEMA_NAME')
-                    ->fromRaw('INFORMATION_SCHEMA.SCHEMATA')
-                    ->whereRaw("SCHEMA_NAME = '{$databaseName}'")
-                    ->count();
-    }
-
-    /**
-     * Get all the tables that need to the optimized
-     *
-     * @return Collection
-     */
-    private function getTables(): Collection
-    {
-        $tableList = collect($this->option('table'));
-        if ($tableList->isEmpty()) {
-            $tableList = $this->db
-                ->newQuery()
-                ->selectRaw('TABLE_NAME')
-                ->fromRaw('INFORMATION_SCHEMA.TABLES')
-                ->whereRaw("TABLE_SCHEMA = '{$this->getDatabase()}'")
-                ->get();
-            return $tableList->pluck('TABLE_NAME');
-        }
-        // Check if the table exists
-        if ($this->existsTables($tableList)) {
-            return $tableList;
-        }
-        throw new TableNotFoundException("One or more tables provided doesn't exists.");
-    }
-
-    /**
-     * Check if the table exists
-     *
-     * @param  Collection $databaseName
-     * @return bool
-     */
-    private function existsTables(Collection $tables): bool
-    {
-        return $this->db
-                    ->newQuery()
-                    ->fromRaw('INFORMATION_SCHEMA.TABLES')
-                    ->whereRaw("TABLE_SCHEMA = '{$this->getDatabase()}'")
-                    ->whereRaw('TABLE_NAME IN (\'' . $tables->implode("','") . '\')')
-                    ->count() == $tables->count();
-    }
-
-    /**
-     * Optimize the table
-     *
-     * @param  string $table
+     * @param string|null $database
+     * @param array $tables
+     * @param bool $shouldLog
      * @return void
      */
-    protected function optimize(string $table): void
+    protected function handleQueuedOptimization(?string $database, array $tables, bool $shouldLog): void
     {
-        $result = $this->db->getConnection()->select("OPTIMIZE TABLE `{$table}`");
-        if (collect($result)->pluck('Msg_text')->contains('OK')) {
-            $this->progress->advance();
+        $job = new OptimizeTablesJob($database, $tables, $shouldLog);
+        OptimizeTablesJob::dispatch($database, $tables, $shouldLog);
+
+        $databaseName = $database === 'default' ? 'default database' : "database '{$database}'";
+        $tableInfo = empty($tables) ? 'all tables' : 'specified tables (' . implode(', ', $tables) . ')';
+        
+        $this->info("Optimization job queued for {$tableInfo} in {$databaseName}");
+    }
+
+    /**
+     * Handle synchronous optimization
+     *
+     * @param string|null $database
+     * @param array $tables
+     * @return void
+     */
+    protected function handleSynchronousOptimization(?string $database, array $tables): void
+    {
+        $this->info('Starting Optimization.');
+        
+        $action = new OptimizeTablesAction($this->db);
+        
+        try {
+            // Set up progress bar with correct count
+            $tableCount = $action->getTableCount($database, $tables);
+            $this->progress = $this->output->createProgressBar($tableCount);
+            $this->progress->start();
+            
+            // Execute optimization with progress callback
+            $results = $action->execute(
+                $database, 
+                $tables,
+                function ($table, $success) {
+                    if ($success) {
+                        $this->progress->advance();
+                    }
+                }
+            );
+            
+            $this->progress->finish();
+            
+            $successful = $results->where('success', true)->count();
+            $total = $results->count();
+            
+            $this->info(PHP_EOL . "Optimization Completed: {$successful}/{$total} tables optimized successfully");
+            
+        } catch (\Exception $e) {
+            $this->error("Optimization failed: " . $e->getMessage());
         }
     }
 }
