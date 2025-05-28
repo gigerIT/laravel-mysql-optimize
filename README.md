@@ -62,18 +62,18 @@ Dispatch optimization job
 ```php
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
-OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true);
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts']);
 ```
 
 Dispatch to specific queue
 ```php
-OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'])
     ->onQueue('database-optimization');
 ```
 
 Dispatch with delay
 ```php
-OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'])
     ->delay(now()->addMinutes(5));
 ```
 
@@ -102,7 +102,7 @@ Use the console command to Optimize Synchronously
 ```php
 protected function schedule(Schedule $schedule)
 {
-    $schedule->command('db:optimize --queued')
+    $schedule->command('db:optimize')
         ->weekly()
         ->sundays()
         ->at('02:00');
