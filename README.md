@@ -1,6 +1,6 @@
 # MySQL Optimizer
 
-A Laravel package for optimizing MySQL database tables with support for both synchronous and asynchronous execution.
+A Laravel package for optimizing MySQL/MariaDB database tables with support for both synchronous and asynchronous execution.
 
 ## Why Use This Package?
 
@@ -14,13 +14,8 @@ Perfect for tables with frequent `INSERT`, `UPDATE`, and `DELETE` operations.
 
 ## Installation
 
-Add the service provider to your `config/app.php`:
-
-```php
-'providers' => [
-    // ...
-    MySQLOptimizer\ServiceProvider::class,
-];
+```bash
+composer require gigerit/laravel-mysql-optimizer
 ```
 
 ## Usage
@@ -28,63 +23,85 @@ Add the service provider to your `config/app.php`:
 ### Console Commands
 
 #### Synchronous Optimization
+
+Optimize all tables in the default database
 ```bash
-# Optimize all tables in the default database
 php artisan db:optimize
+```
 
-# Optimize specific tables
+Optimize specific tables
+```bash
 php artisan db:optimize --table=users --table=posts
+```
 
-# Optimize specific database
+Optimize specific database
+```bash
 php artisan db:optimize --database=my_database
 ```
 
 #### Asynchronous Optimization (Queued)
+
+Queue optimization for all tables
 ```bash
-# Queue optimization for all tables
 php artisan db:optimize --queued
+```
 
-# Queue optimization for specific tables
+Queue optimization for specific tables
+```bash
 php artisan db:optimize --table=users --table=posts --queued
+```
 
-# Queue optimization with logging disabled
+Queue optimization with logging disabled
+```bash
 php artisan db:optimize --queued --no-log
 ```
 
 ### Using the Job Directly
 
+Dispatch optimization job
 ```php
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
-// Dispatch optimization job
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true);
+```
 
-// Dispatch to specific queue
+Dispatch to specific queue
+```php
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
     ->onQueue('database-optimization');
+```
 
-// Dispatch with delay
+Dispatch with delay
+```php
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], true)
     ->delay(now()->addMinutes(5));
 ```
 
 ### Scheduling Optimization
 
-Add to your `app/Console/Kernel.php` to schedule regular optimizations:
-
+Optimize all tables as Queued Job weekly on Sunday at 2 AM
 ```php
 protected function schedule(Schedule $schedule)
 {
-    // Optimize all tables as Queued Job weekly on Sunday at 2 AM
     $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob()->weekly()->sundays()->at('02:00');
+}
+```
 
-    // Optimize specific high-traffic tables as Queued Job daily at 3 AM
+Optimize specific high-traffic tables as Queued Job daily at 3 AM
+```php
+protected function schedule(Schedule $schedule)
+{
     $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob(
         config('database.default'), 
         ['users', 'orders', 'products']
     ))->daily()->at('03:00');
+}
+```
 
-    // Alternative: Use the console command to Optimize Synchronously
+Use the console command to Optimize Synchronously
+```php
+protected function schedule(Schedule $schedule)
+{
     $schedule->command('db:optimize --queued')
         ->weekly()
         ->sundays()
