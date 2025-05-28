@@ -3,6 +3,7 @@
 namespace MySQLOptimizer\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,9 +12,12 @@ use Illuminate\Queue\SerializesModels;
 use MySQLOptimizer\Actions\OptimizeTablesAction;
 use Illuminate\Support\Facades\Log;
 
-class OptimizeTablesJob implements ShouldQueue
+class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+
+    public $tries = 1;
 
     /**
      * The database name to optimize
