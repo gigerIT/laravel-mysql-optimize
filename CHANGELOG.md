@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.1.0...v1.2.0) (2025-06-23)
+
+
+### Features
+
+* make job unique to prevent parallel executions ([5196d32](https://github.com/gigerIT/laravel-mysql-optimize/commit/5196d327b1436ac73d71b4b4761b5fc9b5ec7ccf))
+
 ## [1.1.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.0.0...v1.1.0) (2025-05-27)
 
 
