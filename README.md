@@ -173,7 +173,7 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 ## Credits
 
 Updated, Extenden & Maintained by [gigerIT](https://github.com/gigerIT)
-Original for Laravel 8 Created by [Zak Rahman](https://github.com/zakriyarahman)
+Original Idea of this Package for Laravel 8 by [Zak Rahman](https://github.com/zakriyarahman)
 
 ---
 

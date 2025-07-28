@@ -1,1 +1,4 @@
 /vendor
+
+# JetBrains IDEs
+.idea/

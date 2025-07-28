@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# MySQL Optimization Guidelines
+
+This package focuses on MySQL database table optimization. Follow these database-specific practices:
+
+## Core Optimization Logic
+- The main optimization logic is in [OptimizeTablesAction.php](mdc:src/Actions/OptimizeTablesAction.php)
+- Queued optimization is handled by [OptimizeTablesJob.php](mdc:src/Jobs/OptimizeTablesJob.php)
+- Both sync and async execution paths should be maintained
+
+## Database Safety
+- **NEVER** truncate database tables or run migration refreshes without explicit user consent
+- Always validate table names and database connections before optimization
+- Implement proper error handling for database connection failures
+- Log all optimization operations with appropriate detail levels
+- Provide clear feedback on optimization progress and results
+
+## Performance Considerations
+- Use MySQL's `OPTIMIZE TABLE` statement for InnoDB and MyISAM tables
+- Consider table locking implications during optimization
+- Implement timeouts for long-running optimization operations
+- Monitor disk space requirements during optimization
+- Handle large tables with appropriate memory considerations
+
+## Configuration & Flexibility
+- Allow users to specify which tables to optimize via configuration
+- Support database connection specification for multi-database setups
+- Provide options for batch processing large numbers of tables
+- Include dry-run capabilities for testing optimization plans
+
+## Error Handling & Logging
+- Log optimization start/completion times and space savings
+- Handle MySQL-specific errors gracefully
+- Provide meaningful error messages for common failure scenarios
+- Track optimization statistics and results

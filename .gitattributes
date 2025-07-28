@@ -1,0 +1,27 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# PHP files should always use LF line endings
+*.php text eol=lf
+
+# Composer files
+composer.json text eol=lf
+composer.lock text eol=lf linguist-generated=true
+
+# Documentation and configuration files
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+
+# Exclude files from export-ignore (not included in git archive)
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/CHANGELOG.md export-ignore
+/README.md export-ignore
+/.idea export-ignore
+/.cursor export-ignore
+
+# Mark test files as test code for language statistics
+tests/* linguist-detectable=false 

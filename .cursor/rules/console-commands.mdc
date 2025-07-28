@@ -1,0 +1,45 @@
+---
+globs: src/Console/**/*,**/Commands/**/*
+---
+
+# Console Command Development
+
+Guidelines for developing robust Laravel console commands.
+
+## Command Structure
+- Console commands are located in [src/Console/Commands/](mdc:src/Console/Commands/)
+- Follow Laravel's command naming conventions
+- Use descriptive command signatures and descriptions
+- Implement proper argument and option validation
+
+## User Experience
+- Provide clear, helpful command descriptions and usage examples
+- Use progress bars for long-running operations
+- Implement proper output formatting with colors and styling
+- Include confirmation prompts for destructive operations
+- Provide meaningful feedback on operation results
+
+## Input Validation
+- Validate all command arguments and options
+- Provide helpful error messages for invalid input
+- Support both interactive and non-interactive execution
+- Handle edge cases like missing required parameters
+
+## Command Options
+- Support `--table` option for specific table selection
+- Support `--database` option for multi-database environments
+- Include `--queued` option for background processing
+- Implement `--dry-run` for testing without execution
+- Add `--verbose` for detailed output
+
+## Error Handling
+- Catch and handle database connection errors gracefully
+- Provide specific error messages for different failure scenarios
+- Include proper exit codes for script automation
+- Log errors appropriately while providing user-friendly output
+
+## Testing Commands
+- Test commands with various argument combinations
+- Verify output formatting and messaging
+- Test error conditions and edge cases
+- Ensure commands work in both interactive and automated environments

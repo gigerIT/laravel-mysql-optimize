@@ -1,0 +1,36 @@
+---
+alwaysApply: true
+---
+
+# Laravel Package Development Guidelines
+
+This is a Laravel package for MySQL optimization. Follow these Laravel package best practices:
+
+## Package Structure
+- Main entry point is [ServiceProvider.php](mdc:src/ServiceProvider.php) which registers commands, publishes config, and binds services
+- Console commands live in [src/Console/Commands/](mdc:src/Console/Commands/)
+- Business logic is organized in [Actions](mdc:src/Actions/) for reusable operations
+- Background processing uses [Jobs](mdc:src/Jobs/) for queued operations
+- Configuration is published from [config/mysql-optimizer.php](mdc:config/mysql-optimizer.php)
+
+## Code Quality Standards
+- Keep functions small but meaningful—don't fragment logic unnecessarily
+- Choose the simplest working solution over sophisticated abstractions
+- When files exceed 1,500 lines, split them logically
+- Follow PSR-12 coding standards for PHP
+- Use type hints and return types consistently
+- Leverage Laravel's built-in validation and error handling
+
+## Laravel Best Practices
+- Use Laravel's dependency injection container appropriately
+- Leverage Eloquent relationships when working with models
+- Use Laravel's built-in validation rules and form requests
+- Follow Laravel naming conventions for classes, methods, and variables
+- Use Laravel's built-in testing utilities and factories
+- Implement proper exception handling with Laravel's exception classes
+
+## Dependencies & Compatibility
+- Support Laravel 8.x through 12.x as defined in [composer.json](mdc:composer.json)
+- Minimize external dependencies—justify any new additions
+- Ensure backward compatibility within supported Laravel versions
+- Use Laravel's service container for dependency injection

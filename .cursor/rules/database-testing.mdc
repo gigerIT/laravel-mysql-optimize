@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# Database Testing Guidelines
+
+Testing database operations requires special care. Follow these practices:
+
+## Test Database Safety
+- Use separate test databases—never test against production data
+- Use Laravel's database testing traits appropriately
+- **NEVER** use RefreshDatabase traits that wipe entire databases without explicit authorization
+- Implement proper test data seeding and cleanup
+
+## Testing Database Operations
+- Test both successful optimization scenarios and error conditions
+- Mock database connections when testing error handling
+- Verify table optimization statistics and results
+- Test timeout and memory limit scenarios
+- Validate proper cleanup after failed operations
+
+## Integration Testing
+- Test console commands with real database tables
+- Verify queued job processing works correctly
+- Test configuration loading and validation
+- Ensure proper service provider registration
+
+## Performance Testing
+- Test optimization performance with varying table sizes
+- Verify memory usage doesn't exceed reasonable limits
+- Test concurrent optimization scenarios
+- Validate timeout handling for large tables
+
+## Test Organization
+- Group tests by functionality (Console, Actions, Jobs)
+- Use descriptive test method names that explain the scenario
+- Include both positive and negative test cases
+- Test edge cases like empty tables, missing tables, and invalid configurations

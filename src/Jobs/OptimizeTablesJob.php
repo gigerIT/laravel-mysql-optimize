@@ -19,6 +19,10 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
 
     public $tries = 1;
 
+
+    //Set timeout to 1 hour as optimization can take a long time
+    public $timeout = 3600;
+
     /**
      * The database name to optimize
      *

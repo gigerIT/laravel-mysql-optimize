@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+
+# Performance & Efficiency Guidelines
+
+Optimize for performance while maintaining code clarity and simplicity.
+
+## Code Efficiency
+- Prioritize simplicity over sophistication—avoid over-engineering
+- Keep functions focused and meaningful
+- Use Laravel's built-in caching mechanisms when appropriate
+- Minimize database queries and optimize query performance
+- Leverage lazy loading and eager loading appropriately
+
+## Memory Management
+- Monitor memory usage during table optimization operations
+- Implement proper resource cleanup after database operations
+- Use generators for processing large datasets
+- Avoid loading entire large tables into memory
+
+## Logging & Debugging
+- Implement comprehensive logging for optimization operations
+- Use Laravel's logging levels appropriately (info, warning, error)
+- Include timing information for performance analysis
+- Log resource usage for large optimization operations
+- Provide detailed error messages with context
+
+## Monitoring & Metrics
+- Track optimization success rates and timing
+- Monitor disk space usage during operations
+- Log table sizes before and after optimization
+- Include progress indicators for long-running operations
+
+## Background Processing
+- Use Laravel queues for time-intensive optimization operations
+- Implement proper queue worker configuration guidance
+- Handle queue failures gracefully with retry logic
+- Provide queue monitoring capabilities
+
+## Resource Management
+- Implement proper connection pooling for database operations
+- Use transactions appropriately for data consistency
+- Handle database timeouts and connection failures
+- Optimize batch processing for multiple tables
