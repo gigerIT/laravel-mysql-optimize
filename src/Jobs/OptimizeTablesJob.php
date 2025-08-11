@@ -69,6 +69,13 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
         $action = new OptimizeTablesAction($builder);
         
         try {
+            if ($this->shouldLog) {
+                Log::info("Optimization job started", [
+                    'database' => $this->database ?? 'default',
+                    'tables' => $this->tables
+                ]);
+            }
+
             $results = $action->execute(
                 $this->database,
                 $this->tables,
