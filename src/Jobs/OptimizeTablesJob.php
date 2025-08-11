@@ -43,7 +43,7 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
         
         try {
             if ($this->shouldLog) {
-                Log::info("Optimization job started", [
+                Log::info("MySQLOptimizer: Optimization job started ▶️", [
                     'database' => $this->database ?? 'default',
                     'tables' => $this->tables
                 ]);
@@ -55,7 +55,7 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
                 function ($table, $success) {
                     if ($this->shouldLog) {
                         $status = $success ? 'SUCCESS' : 'FAILED';
-                        Log::info("Table optimization {$status}: {$table}");
+                        Log::info("MySQLOptimizer: Table optimization {$status}: {$table}");
                     }
                 }
             );
@@ -65,7 +65,7 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
                 $successfulTables = $results->where('success', true)->count();
                 $failedTables = $totalTables - $successfulTables;
                 
-                Log::info("Optimization job completed", [
+                Log::info("MySQLOptimizer: Optimization job completed ✅", [
                     'total_tables' => $totalTables,
                     'successful' => $successfulTables,
                     'failed' => $failedTables,
@@ -74,7 +74,7 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
             }
         } catch (\Exception $e) {
             if ($this->shouldLog) {
-                Log::error("Optimization job failed", [
+                Log::error("MySQLOptimizer: Optimization job failed ❌", [
                     'error' => $e->getMessage(),
                     'database' => $this->database ?? 'default',
                     'tables' => $this->tables
@@ -88,7 +88,7 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
     public function failed(\Exception $exception): void
     {
         if ($this->shouldLog) {
-            Log::error("Optimization job permanently failed", [
+            Log::error("MySQLOptimizer: Optimization job permanently failed ❌", [
                 'error' => $exception->getMessage(),
                 'database' => $this->database ?? 'default',
                 'tables' => $this->tables
