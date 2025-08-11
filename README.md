@@ -1,16 +1,21 @@
 # MySQL Optimizer
 
-A Laravel package for optimizing MySQL/MariaDB database tables with support for both synchronous and asynchronous execution.
+A Laravel package for optimizing MySQL/MariaDB database tables with support for both synchronous and queued execution.
 
-## Why Use This Package?
+## Why use this package?
 
 MySQL's `OPTIMIZE TABLE` statement reorganizes tables and compacts wasted space, resulting in:
 
 - **Faster queries** through improved data packing and reduced fragmentation
 - **Less disk I/O** for full table scans
-- **Reduced storage footprint** through better space utilization
+- **Reduced storage footprint** via better space utilization
 
-Perfect for tables with frequent `INSERT`, `UPDATE`, and `DELETE` operations.
+Ideal for tables with frequent `INSERT`, `UPDATE`, and `DELETE` operations.
+
+## Requirements
+
+- Laravel 8.x – 12.x (auto-discovered service provider)
+- MySQL 5.7+/8.0+ or MariaDB (uses INFORMATION_SCHEMA and OPTIMIZE TABLE)
 
 ## Installation
 
@@ -18,87 +23,132 @@ Perfect for tables with frequent `INSERT`, `UPDATE`, and `DELETE` operations.
 composer require gigerit/laravel-mysql-optimizer
 ```
 
-## Usage
+Publish the configuration (optional):
 
-### Console Commands
+```bash
+php artisan vendor:publish --provider="MySQLOptimizer\ServiceProvider"
+```
 
-#### Synchronous Optimization
+## Configuration
 
-Optimize all tables in the default database
+The package reads the default database to optimize from `config/mysql-optimizer.php`:
+
+```php
+<?php
+
+return [
+    'database' => env('DB_DATABASE'),
+];
+```
+
+- Set `DB_DATABASE` in your `.env`, or override `mysql-optimizer.database` at runtime.
+- When the `--database=default` option is used, the action resolves to `config('mysql-optimizer.database')`.
+
+## CLI usage
+
+```bash
+php artisan db:optimize [--database=default] [--table=*] [--queued] [--no-log]
+```
+
+Options:
+
+- `--database=default`: Database name to optimize. Use `default` to use `config('mysql-optimizer.database')`.
+- `--table=*`: Repeatable. If omitted, all tables in the target database are optimized.
+- `--queued`: Queue the optimization as a job instead of running synchronously.
+- `--no-log`: Disable job logging; only applies when `--queued` is used.
+
+### Examples
+
+Optimize all tables in the default database:
+
 ```bash
 php artisan db:optimize
 ```
 
-Optimize specific tables
+Optimize specific tables:
+
 ```bash
 php artisan db:optimize --table=users --table=posts
 ```
 
-Optimize specific database
+Optimize a specific database:
+
 ```bash
 php artisan db:optimize --database=my_database
 ```
 
-#### Asynchronous Optimization (Queued)
+Queue optimization for all tables:
 
-Queue optimization for all tables
 ```bash
 php artisan db:optimize --queued
 ```
 
-Queue optimization for specific tables
+Queue optimization for selected tables with logging disabled:
+
 ```bash
-php artisan db:optimize --table=users --table=posts --queued
+php artisan db:optimize --table=users --table=posts --queued --no-log
 ```
 
-Queue optimization with logging disabled
-```bash
-php artisan db:optimize --queued --no-log
-```
+## Using the Job directly
 
-### Using the Job Directly
-
-Dispatch optimization job
 ```php
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
+// Queue optimization for specific tables (logging enabled by default)
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts']);
-```
 
-Dispatch to specific queue
-```php
+// Send to a specific queue
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'])
     ->onQueue('database-optimization');
-```
 
-Dispatch with delay
-```php
+// Delay execution
 OptimizeTablesJob::dispatch('my_database', ['users', 'posts'])
     ->delay(now()->addMinutes(5));
+
+// Disable logging explicitly
+OptimizeTablesJob::dispatch('my_database', ['users', 'posts'], false);
 ```
 
-### Scheduling Optimization
+When using queued execution, ensure a worker is running:
 
-Optimize all tables as Queued Job weekly on Sunday at 2 AM
+```bash
+php artisan queue:work
+```
+
+## Scheduling
+
+Optimize all tables weekly on Sunday at 02:00 as a queued job:
+
 ```php
+use Illuminate\Console\Scheduling\Schedule;
+use MySQLOptimizer\Jobs\OptimizeTablesJob;
+
 protected function schedule(Schedule $schedule)
 {
-    $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob()->weekly()->sundays()->at('02:00');
+    $schedule->job(new OptimizeTablesJob())
+        ->weekly()
+        ->sundays()
+        ->at('02:00');
 }
 ```
 
-Optimize specific high-traffic tables as Queued Job daily at 3 AM
+Optimize selected high-traffic tables daily at 03:00 as a queued job:
+
 ```php
+use Illuminate\Console\Scheduling\Schedule;
+use MySQLOptimizer\Jobs\OptimizeTablesJob;
+
 protected function schedule(Schedule $schedule)
 {
-    $schedule->job(new \MySQLOptimizer\Jobs\OptimizeTablesJob(
-        config('database.default'), 
+    $schedule->job(new OptimizeTablesJob(
+        config('database.default'),
         ['users', 'orders', 'products']
     ))->daily()->at('03:00');
 }
 ```
 
-Use the console command to Optimize Synchronously
+Or schedule the console command to run synchronously:
+
 ```php
 protected function schedule(Schedule $schedule)
 {
@@ -109,47 +159,30 @@ protected function schedule(Schedule $schedule)
 }
 ```
 
-## Configuration
+## Behavior and logging
 
-Create a config file `config/mysql-optimizer.php`:
+- Synchronous runs show a progress bar and success counts in the console.
+- Queued runs log start/completion, and per-table results (unless `--no-log` is used).
 
-```php
-<?php
-
-return [
-    'database' => env('DB_DATABASE', 'mysql'),
-];
-```
-
-## Features
-
-- **Action-based architecture**: Reusable optimization logic
-- **Progress tracking**: Real-time progress updates during optimization
-- **Queueable jobs**: Background processing for large datasets
-- **Flexible table selection**: Optimize all tables or specific ones
-- **Database validation**: Ensures databases and tables exist before optimization
-- **Comprehensive logging**: Track optimization results and failures
-- **Error handling**: Graceful handling of optimization failures
-
-## Exception Handling
-
-The package throws specific exceptions for invalid arguments:
+## Exceptions
 
 - `MySQLOptimizer\Exceptions\DatabaseNotFoundException`
 - `MySQLOptimizer\Exceptions\TableNotFoundException`
 
-## Performance Notes
+## Operational notes
 
-- First optimization after bulk data changes is typically slower
-- Benefits vary by table structure and data patterns
-- Large tables may require significant time to optimize
-- Consider running during low-traffic periods
+- `OPTIMIZE TABLE` may lock tables. Prefer running during low-traffic windows.
+- Ensure the DB user has sufficient privileges to run `OPTIMIZE TABLE` and access `INFORMATION_SCHEMA`.
 
 ## Testing
 
 ```bash
 composer test
 ```
+
+## Compatibility
+
+- Laravel 8.x – 12.x
 
 ## Contributing
 
@@ -163,8 +196,7 @@ We welcome contributions! Please see:
 This package follows:
 
 - [PSR-4 Autoloading](https://www.php-fig.org/psr/psr-4/)
-- [PSR-2 Coding Style](https://www.php-fig.org/psr/psr-2/)
-- [PSR-1 Basic Coding Standard](https://www.php-fig.org/psr/psr-1/)
+- [PSR-12 Coding Style](https://www.php-fig.org/psr/psr-12/)
 
 ## License
 
@@ -172,9 +204,10 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ## Credits
 
-Updated, Extenden & Maintained by [gigerIT](https://github.com/gigerIT)
-Original Idea of this Package for Laravel 8 by [Zak Rahman](https://github.com/zakriyarahman)
+Updated, Extended & Maintained by [gigerIT](https://github.com/gigerIT)
+
+Original idea for Laravel 8 by [Zak Rahman](https://github.com/zakriyarahman)
 
 ---
 
-💡 **Pro Tip**: Schedule regular optimizations using Laravel's task scheduler for automated maintenance.
+💡 Pro tip: schedule regular optimizations using Laravel's task scheduler for automated maintenance.
