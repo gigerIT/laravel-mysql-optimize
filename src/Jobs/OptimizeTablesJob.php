@@ -16,41 +16,20 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-
     public $tries = 1;
-
 
     //Set timeout to 1 hour as optimization can take a long time
     public $timeout = 3600;
 
-    /**
-     * The database name to optimize
-     *
-     * @var string|null
-     */
+
     public ?string $database;
 
-    /**
-     * The tables to optimize
-     *
-     * @var array
-     */
+
     public array $tables;
 
-    /**
-     * Should log optimization results
-     *
-     * @var bool
-     */
     public bool $shouldLog;
 
-    /**
-     * Create a new job instance.
-     *
-     * @param string|null $database
-     * @param array $tables
-     * @param bool $shouldLog
-     */
+
     public function __construct(?string $database = null, array $tables = [], bool $shouldLog = true)
     {
         $this->database = $database;
@@ -58,12 +37,6 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
         $this->shouldLog = $shouldLog;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @param Builder $builder
-     * @return void
-     */
     public function handle(Builder $builder): void
     {
         $action = new OptimizeTablesAction($builder);
@@ -112,12 +85,6 @@ class OptimizeTablesJob implements ShouldQueue, ShouldBeUnique
         }
     }
 
-    /**
-     * The job failed to process.
-     *
-     * @param \Exception $exception
-     * @return void
-     */
     public function failed(\Exception $exception): void
     {
         if ($this->shouldLog) {
