@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.0...v1.2.1) (2025-10-22)
+
+
+### Bug Fixes
+
+* update OptimizeTablesJob to increase retry attempts to 3, improve logging consistency, and add unique ID generation for job instances ([d81dc96](https://github.com/gigerIT/laravel-mysql-optimize/commit/d81dc96280cbdefeb0df1e7a42473b85ac6888ce))
+
 ## [1.2.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.1.0...v1.2.0) (2025-06-23)
 
 
