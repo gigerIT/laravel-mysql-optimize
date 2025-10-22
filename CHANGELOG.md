@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.1...v1.2.2) (2025-10-22)
+
+
+### Bug Fixes
+
+* composer json & add mariadb to composer.json dependencies for improved database support ([6ef292a](https://github.com/gigerIT/laravel-mysql-optimize/commit/6ef292a61f5777047c61ce5dcb64902e75d5b8b8))
+
 ## [1.2.1](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.0...v1.2.1) (2025-10-22)
 
 
