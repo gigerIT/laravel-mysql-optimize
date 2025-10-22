@@ -17,8 +17,6 @@ class ServiceProvider extends AbstractServiceProvider
 
     /**
      * Register the service provider.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -29,8 +27,6 @@ class ServiceProvider extends AbstractServiceProvider
 
     /**
      * Boot the service provider.
-     *
-     * @return void
      */
     public function boot(): void
     {

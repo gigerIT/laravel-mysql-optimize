@@ -4,23 +4,19 @@ namespace MySQLOptimizer\Console\Commands;
 
 use Illuminate\Console\Command as BaseCommand;
 use Illuminate\Database\Query\Builder;
-use Symfony\Component\Console\Helper\ProgressBar;
 use MySQLOptimizer\Actions\OptimizeTablesAction;
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class Command extends BaseCommand
 {
     /**
      * The database query builder instance.
-     *
-     * @var Builder
      */
     protected Builder $db;
 
     /**
      * The progress bar instance.
-     *
-     * @var ProgressBar
      */
     protected ProgressBar $progress;
 
@@ -51,8 +47,6 @@ class Command extends BaseCommand
 
     /**
      * Construct
-     *
-     * @param Builder $builder
      */
     public function __construct(Builder $builder)
     {
@@ -62,15 +56,13 @@ class Command extends BaseCommand
 
     /**
      * Execute the console command.
-     *
-     * @return void
      */
     public function handle(): void
     {
         $database = $this->option('database');
         $tables = $this->option('table');
         $isQueued = $this->option('queued');
-        $shouldLog = !$this->option('no-log');
+        $shouldLog = ! $this->option('no-log');
 
         if ($isQueued) {
             $this->handleQueuedOptimization($database, $tables, $shouldLog);
@@ -81,11 +73,6 @@ class Command extends BaseCommand
 
     /**
      * Handle queued optimization
-     *
-     * @param string|null $database
-     * @param array $tables
-     * @param bool $shouldLog
-     * @return void
      */
     protected function handleQueuedOptimization(?string $database, array $tables, bool $shouldLog): void
     {
@@ -93,33 +80,29 @@ class Command extends BaseCommand
         OptimizeTablesJob::dispatch($database, $tables, $shouldLog);
 
         $databaseName = $database === 'default' ? 'default database' : "database '{$database}'";
-        $tableInfo = empty($tables) ? 'all tables' : 'specified tables (' . implode(', ', $tables) . ')';
-        
+        $tableInfo = empty($tables) ? 'all tables' : 'specified tables ('.implode(', ', $tables).')';
+
         $this->info("Optimization job queued for {$tableInfo} in {$databaseName}");
     }
 
     /**
      * Handle synchronous optimization
-     *
-     * @param string|null $database
-     * @param array $tables
-     * @return void
      */
     protected function handleSynchronousOptimization(?string $database, array $tables): void
     {
         $this->info('Starting Optimization.');
-        
+
         $action = new OptimizeTablesAction($this->db);
-        
+
         try {
             // Set up progress bar with correct count
             $tableCount = $action->getTableCount($database, $tables);
             $this->progress = $this->output->createProgressBar($tableCount);
             $this->progress->start();
-            
+
             // Execute optimization with progress callback
             $results = $action->execute(
-                $database, 
+                $database,
                 $tables,
                 function ($table, $success) {
                     if ($success) {
@@ -127,16 +110,16 @@ class Command extends BaseCommand
                     }
                 }
             );
-            
+
             $this->progress->finish();
-            
+
             $successful = $results->where('success', true)->count();
             $total = $results->count();
-            
-            $this->info(PHP_EOL . "Optimization Completed: {$successful}/{$total} tables optimized successfully");
-            
+
+            $this->info(PHP_EOL."Optimization Completed: {$successful}/{$total} tables optimized successfully");
+
         } catch (\Exception $e) {
-            $this->error("Optimization failed: " . $e->getMessage());
+            $this->error('Optimization failed: '.$e->getMessage());
         }
     }
 }

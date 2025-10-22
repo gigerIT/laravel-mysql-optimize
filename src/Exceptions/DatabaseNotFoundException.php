@@ -4,7 +4,4 @@ namespace MySQLOptimizer\Exceptions;
 
 use Exception;
 
-class DatabaseNotFoundException extends Exception
-{
-
-}
+class DatabaseNotFoundException extends Exception {}
