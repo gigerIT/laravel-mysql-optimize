@@ -1,12 +1,13 @@
 {
     "name": "gigerit/laravel-mysql-optimizer",
     "type": "library",
-    "description": "A laravel package that optimizes mysql database tables.",
+    "description": "A laravel package that optimizes mysql/mariadb database tables.",
     "keywords": [
         "database",
         "laravel",
         "optimize",
         "mysql",
+        "mariadb",
         "table"
     ],
     "license": "MIT",
