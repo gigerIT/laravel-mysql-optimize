@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.2...v1.3.0) (2025-11-10)
+
+
+### Features
+
+* enhance OptimizeTablesJob with unique job duration and improved logging details ([cb49478](https://github.com/gigerIT/laravel-mysql-optimize/commit/cb49478004d6b49787aa69d215543040e654231b))
+
 ## [1.2.2](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.1...v1.2.2) (2025-10-22)
 
 
