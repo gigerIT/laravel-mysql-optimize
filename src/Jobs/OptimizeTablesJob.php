@@ -21,6 +21,8 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
     // Set timeout to 1 hour as optimization can take a long time
     public $timeout = 3600;
 
+    public $uniqueFor = 3600;
+
     public ?string $database;
 
     public array $tables;
@@ -36,7 +38,7 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
 
     public function uniqueId(): string
     {
-        return 'optimize-tables-'.($this->database ?? 'default');
+        return 'optimize-tables:' . ($this->database ?? 'default');
     }
 
     public function handle(Builder $builder): void
@@ -48,6 +50,11 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
                 Log::info('MySQLOptimizer: Optimization job started ▶️', [
                     'database' => $this->database ?? 'default',
                     'tables' => $this->tables,
+                    'job' => [
+                        'id' => $this->job->getJobId(),
+                        'attempts' => $this->job->attempts(),
+                        'timeout' => $this->job->timeout(),
+                    ],
                 ]);
             }
 
@@ -57,7 +64,13 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
                 function ($table, $success) {
                     if ($this->shouldLog) {
                         $status = $success ? 'SUCCESS' : 'FAILED';
-                        Log::info("MySQLOptimizer: Table optimization {$status}: {$table}");
+                        Log::info("MySQLOptimizer: Table optimization {$status}: {$table}", [
+                            'job' => [
+                                'id' => $this->job->getJobId(),
+                                'attempts' => $this->job->attempts(),
+                                'timeout' => $this->job->timeout(),
+                            ],
+                        ]);
                     }
                 }
             );
@@ -72,6 +85,11 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
                     'successful' => $successfulTables,
                     'failed' => $failedTables,
                     'database' => $this->database ?? 'default',
+                    'job' => [
+                        'id' => $this->job->getJobId(),
+                        'attempts' => $this->job->attempts(),
+                        'timeout' => $this->job->timeout(),
+                    ],
                 ]);
             }
         } catch (\Exception $e) {
@@ -80,6 +98,11 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
                     'error' => $e->getMessage(),
                     'database' => $this->database ?? 'default',
                     'tables' => $this->tables,
+                    'job' => [
+                        'id' => $this->job->getJobId(),
+                        'attempts' => $this->job->attempts(),
+                        'timeout' => $this->job->timeout(),
+                    ],
                 ]);
             }
 
@@ -94,6 +117,11 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
                 'error' => $exception->getMessage(),
                 'database' => $this->database ?? 'default',
                 'tables' => $this->tables,
+                'job' => [
+                    'id' => $this->job->getJobId(),
+                    'attempts' => $this->job->attempts(),
+                    'timeout' => $this->job->timeout(),
+                ],
             ]);
         }
     }
