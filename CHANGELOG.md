@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.3.0...v1.4.0) (2025-12-12)
+
+
+### Features
+
+* add backoff property to OptimizeTablesJob to prevent concurrent executions ([1a9da96](https://github.com/gigerIT/laravel-mysql-optimize/commit/1a9da9696da51d1d3d3d1cba7b33cc7464c856be))
+
 ## [1.3.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.2.2...v1.3.0) (2025-11-10)
 
 
