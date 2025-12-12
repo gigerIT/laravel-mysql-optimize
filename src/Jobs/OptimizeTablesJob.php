@@ -23,6 +23,9 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
 
     public $uniqueFor = 3600;
 
+    // Prevent queue retry from kicking off a second attempt while the first run is still in progress
+    public $backoff = 3600;
+
     public ?string $database;
 
     public array $tables;
