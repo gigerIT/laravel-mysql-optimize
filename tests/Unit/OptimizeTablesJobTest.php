@@ -6,19 +6,19 @@ use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
 describe('OptimizeTablesJob', function () {
     it('implements ShouldQueue', function () {
-        $job = new OptimizeTablesJob();
+        $job = new OptimizeTablesJob;
 
         expect($job)->toBeInstanceOf(ShouldQueue::class);
     });
 
     it('implements ShouldBeUnique', function () {
-        $job = new OptimizeTablesJob();
+        $job = new OptimizeTablesJob;
 
         expect($job)->toBeInstanceOf(ShouldBeUnique::class);
     });
 
     it('has correct default property values', function () {
-        $job = new OptimizeTablesJob();
+        $job = new OptimizeTablesJob;
 
         expect($job->tries)->toBe(3)
             ->and($job->timeout)->toBe(3600)
@@ -35,7 +35,7 @@ describe('OptimizeTablesJob', function () {
     });
 
     it('has correct default constructor values', function () {
-        $job = new OptimizeTablesJob();
+        $job = new OptimizeTablesJob;
 
         expect($job->database)->toBeNull()
             ->and($job->tables)->toBe([])
@@ -49,7 +49,7 @@ describe('OptimizeTablesJob', function () {
     });
 
     it('generates unique id with default when no database specified', function () {
-        $job = new OptimizeTablesJob();
+        $job = new OptimizeTablesJob;
 
         expect($job->uniqueId())->toBe('optimize-tables:default');
     });

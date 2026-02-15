@@ -41,7 +41,7 @@ class OptimizeTablesJob implements ShouldBeUnique, ShouldQueue
 
     public function uniqueId(): string
     {
-        return 'optimize-tables:' . ($this->database ?? 'default');
+        return 'optimize-tables:'.($this->database ?? 'default');
     }
 
     public function handle(Builder $builder): void

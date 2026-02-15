@@ -2,8 +2,6 @@
 
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
-use MySQLOptimizer\Actions\OptimizeTablesAction;
-use MySQLOptimizer\Exceptions\DatabaseNotFoundException;
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
 describe('db:optimize command', function () {

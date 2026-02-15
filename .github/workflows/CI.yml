@@ -39,10 +39,52 @@ jobs:
           composer-options: --prefer-dist
 
       - name: Run Tests
-        run: vendor/bin/pest --colors=always
+        run: vendor/bin/pest --testsuite Unit,Feature --colors=always
+
+  integration-test:
+    runs-on: ubuntu-latest
+    name: MySQL Integration
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist
+
+      - name: Run Integration Tests
+        run: vendor/bin/pest --testsuite Integration --colors=always
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_DATABASE: testing
+          MYSQL_USERNAME: root
+          MYSQL_PASSWORD: password
 
   release-please:
-    needs: [test]
+    needs: [test, integration-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
