@@ -26,6 +26,9 @@
     },
     "require-dev": {
         "laravel/pint": "^1.25",
+        "orchestra/testbench": "*",
+        "pestphp/pest": "*",
+        "pestphp/pest-plugin-laravel": "*",
         "phpstan/phpstan": "^2.1"
     },
     "autoload": {
@@ -34,7 +37,9 @@
         }
     },
     "autoload-dev": {
-        "psr-4": {}
+        "psr-4": {
+            "Tests\\": "tests"
+        }
     },
     "extra": {
         "laravel": {
@@ -44,10 +49,14 @@
         }
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
     "scripts": {
         "lint": "vendor/bin/pint",
+        "test": "vendor/bin/pest",
         "test:types": "vendor/bin/phpstan analyse src --memory-limit=1G"
     }
 }
