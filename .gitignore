@@ -1,4 +1,5 @@
 /vendor
+composer.lock
 
 # JetBrains IDEs
 .idea/
