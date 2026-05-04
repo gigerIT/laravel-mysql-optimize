@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.4.0...v1.5.0) (2026-05-04)
+
+
+### Features
+
+* Laravel 13 support ([59cc417](https://github.com/gigerIT/laravel-mysql-optimize/commit/59cc417d8d3bd3efd8588390ac6c9d83592b4c1f))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump actions/checkout from 4 to 6 ([bf1f09f](https://github.com/gigerIT/laravel-mysql-optimize/commit/bf1f09f2fea8b1bf9a13f82841bc4bf8e7cb0473))
+* **deps:** bump actions/checkout from 4 to 6 ([5223375](https://github.com/gigerIT/laravel-mysql-optimize/commit/522337551fb9ffc3c3fda1a9bd262309466f28d3))
+* **deps:** bump googleapis/release-please-action from 4 to 5 ([6c3905b](https://github.com/gigerIT/laravel-mysql-optimize/commit/6c3905be49d7b8158ae719006fb73973c0f8e97b))
+* **deps:** bump googleapis/release-please-action from 4 to 5 ([44237e5](https://github.com/gigerIT/laravel-mysql-optimize/commit/44237e5eb3a3835ad338b1f3bd1ccf4b668bc336))
+* **deps:** bump ramsey/composer-install from 3 to 4 ([0e58420](https://github.com/gigerIT/laravel-mysql-optimize/commit/0e5842055ab64d874a1967fabbfa7b594ad12d78))
+* **deps:** bump ramsey/composer-install from 3 to 4 ([b47c6ce](https://github.com/gigerIT/laravel-mysql-optimize/commit/b47c6ce3beb3504ff88444f42d19b74214db31ff))
+
 ## [1.4.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.3.0...v1.4.0) (2026-02-15)
 
 
