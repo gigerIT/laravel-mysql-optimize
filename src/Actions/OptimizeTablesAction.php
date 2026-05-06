@@ -27,10 +27,7 @@ class OptimizeTablesAction
      */
     public function getTableCount(?string $database = null, array $tables = []): int
     {
-        $databaseName = $this->resolveDatabase($database);
-        $tablesToOptimize = $this->resolveTables($databaseName, $tables);
-
-        return $tablesToOptimize->count();
+        return $this->targetTables($this->resolveDatabase($database), $tables)->count();
     }
 
     /**
@@ -40,21 +37,16 @@ class OptimizeTablesAction
      */
     public function execute(?string $database = null, array $tables = [], ?callable $progressCallback = null): Collection
     {
-        $databaseName = $this->resolveDatabase($database);
-        $tablesToOptimize = $this->resolveTables($databaseName, $tables);
+        $tablesToOptimize = $this->targetTables($this->resolveDatabase($database), $tables);
 
         return $tablesToOptimize->map(function ($table) use ($progressCallback) {
-            $result = $this->optimizeTable($table);
+            $success = $this->optimizeTable($table);
 
             if ($progressCallback) {
-                $progressCallback($table, $result);
+                $progressCallback($table, $success);
             }
 
-            return [
-                'table' => $table,
-                'success' => $result,
-                'timestamp' => date('Y-m-d H:i:s'),
-            ];
+            return $this->resultFor($table, $success);
         });
     }
 
@@ -62,6 +54,14 @@ class OptimizeTablesAction
      * Get database which need optimization
      */
     protected function resolveDatabase(?string $database = null): string
+    {
+        return $this->targetDatabase($database);
+    }
+
+    /**
+     * Get database which need optimization
+     */
+    private function targetDatabase(?string $database = null): string
     {
         if ($database === null || $database === 'default') {
             return \config('mysql-optimizer.database');
@@ -91,23 +91,16 @@ class OptimizeTablesAction
     /**
      * Get all the tables that need to be optimized
      */
-    private function resolveTables(string $database, array $tables = []): Collection
+    private function targetTables(string $database, array $tables = []): Collection
     {
         $tableList = collect($tables);
 
         if ($tableList->isEmpty()) {
-            $tableList = $this->db
-                ->newQuery()
-                ->selectRaw('TABLE_NAME')
-                ->fromRaw('INFORMATION_SCHEMA.TABLES')
-                ->whereRaw('TABLE_SCHEMA = ?', [$database])
-                ->get();
-
-            return $tableList->pluck('TABLE_NAME');
+            return $this->allTablesFor($database);
         }
 
         // Check if the tables exist
-        if ($this->existsTables($database, $tableList)) {
+        if ($this->requestedTablesExist($database, $tableList)) {
             return $tableList;
         }
 
@@ -115,9 +108,23 @@ class OptimizeTablesAction
     }
 
     /**
+     * Get all tables in the database
+     */
+    private function allTablesFor(string $database): Collection
+    {
+        return $this->db
+            ->newQuery()
+            ->selectRaw('TABLE_NAME')
+            ->fromRaw('INFORMATION_SCHEMA.TABLES')
+            ->whereRaw('TABLE_SCHEMA = ?', [$database])
+            ->get()
+            ->pluck('TABLE_NAME');
+    }
+
+    /**
      * Check if the tables exist
      */
-    private function existsTables(string $database, Collection $tables): bool
+    private function requestedTablesExist(string $database, Collection $tables): bool
     {
         $placeholders = str_repeat('?,', $tables->count() - 1).'?';
 
@@ -134,8 +141,28 @@ class OptimizeTablesAction
      */
     public function optimizeTable(string $table): bool
     {
-        $result = $this->db->getConnection()->select("OPTIMIZE TABLE `{$table}`");
+        $result = $this->db->getConnection()->select('OPTIMIZE TABLE '.$this->quoteIdentifier($table));
 
         return collect($result)->pluck('Msg_text')->contains('OK');
+    }
+
+    /**
+     * Build a single optimization result row
+     */
+    private function resultFor(string $table, bool $success): array
+    {
+        return [
+            'table' => $table,
+            'success' => $success,
+            'timestamp' => date('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Quote a MySQL identifier
+     */
+    private function quoteIdentifier(string $identifier): string
+    {
+        return '`'.str_replace('`', '``', $identifier).'`';
     }
 }

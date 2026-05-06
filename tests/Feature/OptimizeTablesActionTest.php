@@ -313,4 +313,15 @@ describe('optimizeTable', function () {
 
         expect($result)->toBeTrue();
     });
+
+    it('escapes backticks in table names before optimizing', function () {
+        $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
+        $this->connection->shouldReceive('select')
+            ->with('OPTIMIZE TABLE `user``archive`')
+            ->andReturn([(object) ['Msg_text' => 'OK']]);
+
+        $result = $this->action->optimizeTable('user`archive');
+
+        expect($result)->toBeTrue();
+    });
 });
