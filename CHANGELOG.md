@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.5.0...v1.5.1) (2026-05-06)
+
+
+### Miscellaneous Chores
+
+* **ci:** add PHP 8.5 to CI matrix ([c08be8e](https://github.com/gigerIT/laravel-mysql-optimize/commit/c08be8ea34412c661b02e8e647d9a748a9684816))
+
 ## [1.5.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.4.0...v1.5.0) (2026-05-04)
 
 
