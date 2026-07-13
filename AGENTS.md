@@ -49,6 +49,13 @@ Run Integration:
 composer test:integration
 ```
 
+Run Redis queue integration (requires disposable Redis and opt-in env):
+
+```bash
+REDIS_INTEGRATION=1 REDIS_HOST=127.0.0.1 REDIS_PORT=6379 \
+composer test:redis-integration
+```
+
 Run all tests:
 
 ```bash
@@ -132,7 +139,9 @@ flowchart TD
     B --> D[db:optimize command]
     D -->|sync| E[OptimizeTablesAction]
     D -->|--queued| F[OptimizeTablesJob]
-    F --> E
+    F -->|default monolithic| E
+    F -->|per_table opt-in| L[OptimizeTableJob per table]
+    L --> M[OptimizeTableAction]
     E --> G[INFORMATION_SCHEMA]
     E --> H[OPTIMIZE TABLE]
     H --> I[Result collection]
@@ -142,22 +151,31 @@ flowchart TD
 
 `ServiceProvider` registers `db:optimize`, publishes
 `config/mysql-optimizer.php` in Laravel console context, merges package config.
-Config has `database`, default `env('DB_DATABASE')`.
+Config has `database`, default `env('DB_DATABASE')`, plus queue routing,
+runtime, uniqueness, and opt-in per-table settings.
 
 `src/Console/Commands/Command.php` is CLI edge. Reads `--database`, repeatable
 `--table`, `--queued`, `--no-log`. Sync path counts tables, shows progress,
 runs `OptimizeTablesAction`, prints success count. Queued path dispatches
 `OptimizeTablesJob`.
 
-`src/Actions/OptimizeTablesAction.php` owns DB flow. Resolves DB, validates
-explicit DB via `INFORMATION_SCHEMA.SCHEMATA`, resolves tables via
-`INFORMATION_SCHEMA.TABLES`, runs `OPTIMIZE TABLE`. Returns collection with
-`table`, `success`, `timestamp`.
+`src/Actions/OptimizeTablesAction.php` preserves synchronous and default
+monolithic queued flow. Target resolution canonicalizes database/table names
+through `INFORMATION_SCHEMA`; single-table execution qualifies and quotes both
+schema and table. Results contain `table`, `success`, `timestamp`.
 
-`src/Jobs/OptimizeTablesJob.php` wraps action for queues. Implements
-`ShouldQueue` and `ShouldBeUnique`. Uses `tries = 3`, `timeout = 3600`,
-`uniqueFor = 3600`, `backoff = 3600`. Logs start, per-table, complete, fail
-when `shouldLog` true.
+`src/Jobs/OptimizeTablesJob.php` implements `ShouldQueue` and
+`ShouldBeUnique`. Queue defaults are `tries = 1`, `timeout = 3600`,
+`uniqueFor = 0`, `backoff = 3600`; published config can override runtime and
+routing. Default mode remains one sequential monolithic job. Opt-in
+`queue.per_table` fans out unique `OptimizeTableJob` children and requires an
+explicit dedicated connection and queue intended for one worker.
+
+Queued execution validates inspectable queue reservation settings before
+command dispatch and again against the actual reserved connection before DDL.
+`backoff` does not extend Redis `retry_after`; require job timeout plus the
+package safety margin to fit below `retry_after`. Horizon also needs its
+supervisor timeout between job timeout and `retry_after`.
 
 Package narrow: no migrations, schemas, models, controllers, routes, views, or
 HTTP API.
@@ -173,6 +191,9 @@ HTTP API.
   Integration overrides DB to MySQL.
 - CI: Unit + Feature on PHP 8.2, 8.3, 8.4, 8.5.
 - CI: Integration on PHP 8.4 with MySQL 8.0.
+- CI: Redis integration on PHP 8.4 with Redis 7 and three real concurrent
+  Laravel workers. The suite must fail, not skip, when `REDIS_INTEGRATION=1`
+  and Redis/PhpRedis/PCNTL is unavailable.
 - SQL/command/provider/queue changes need targeted suite; run
   `composer test:all` when practical.
 - Never use DB refresh traits or destructive helpers on real DB without
@@ -213,6 +234,9 @@ composer audit
 - Do not test against production/shared DB. Integration needs disposable test
   tables and cleanup.
 - Treat `OPTIMIZE TABLE` as operationally sensitive; it may lock tables.
+- Do not treat `$backoff`, `$tries`, or `ShouldBeUnique` as protection against
+  Redis reservation expiry. Validate `retry_after`, and keep per-table mode on
+  an explicit dedicated one-worker queue.
 - Keep Laravel/PHP support in sync with CI and `composer.json`.
 - SQL/table/DB validation changes need injection review and input tests.
 - Preserve sync + queued public API unless user asks breaking change.
@@ -229,7 +253,8 @@ composer audit
 - `OptimizeTablesJob` can dispatch directly, `onQueue`, delay, disable logging.
 - Consumers can schedule job or command through Laravel scheduler.
 - Queue behavior comes from consuming app queue connection and workers.
-- > TODO: No feature flag system found.
+- `mysql-optimizer.queue.per_table` opts into per-table fan-out; it defaults to
+  `false` and requires explicit queue connection and name.
 
 ## Further Reading
 

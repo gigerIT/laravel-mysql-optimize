@@ -10,4 +10,16 @@ describe('mysql-optimizer config', function () {
 
         expect(config('mysql-optimizer.database'))->toBe('custom_database');
     });
+
+    it('has safe queue defaults', function () {
+        expect(config('mysql-optimizer.queue'))->toBe([
+            'per_table' => false,
+            'connection' => null,
+            'name' => null,
+            'timeout' => 3600,
+            'tries' => 1,
+            'backoff' => 3600,
+            'unique_for' => 0,
+        ]);
+    });
 });

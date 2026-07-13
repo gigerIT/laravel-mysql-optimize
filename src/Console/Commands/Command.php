@@ -5,7 +5,9 @@ namespace MySQLOptimizer\Console\Commands;
 use Illuminate\Console\Command as BaseCommand;
 use Illuminate\Database\Query\Builder;
 use MySQLOptimizer\Actions\OptimizeTablesAction;
+use MySQLOptimizer\Exceptions\InvalidQueueConfigurationException;
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
+use MySQLOptimizer\Support\QueueConfigurationValidator;
 use Symfony\Component\Console\Helper\ProgressBar;
 
 class Command extends BaseCommand
@@ -48,7 +50,7 @@ class Command extends BaseCommand
     /**
      * Construct
      */
-    public function __construct(Builder $builder)
+    public function __construct(Builder $builder, protected QueueConfigurationValidator $queueConfiguration)
     {
         $this->db = $builder;
         parent::__construct();
@@ -57,7 +59,7 @@ class Command extends BaseCommand
     /**
      * Execute the console command.
      */
-    public function handle(): void
+    public function handle(): int
     {
         $database = $this->option('database');
         $tables = $this->option('table');
@@ -65,24 +67,35 @@ class Command extends BaseCommand
         $shouldLog = ! $this->option('no-log');
 
         if ($isQueued) {
-            $this->handleQueuedOptimization($database, $tables, $shouldLog);
+            return $this->handleQueuedOptimization($database, $tables, $shouldLog);
         } else {
             $this->handleSynchronousOptimization($database, $tables);
         }
+
+        return self::SUCCESS;
     }
 
     /**
      * Handle queued optimization
      */
-    protected function handleQueuedOptimization(?string $database, array $tables, bool $shouldLog): void
+    protected function handleQueuedOptimization(?string $database, array $tables, bool $shouldLog): int
     {
-        $job = new OptimizeTablesJob($database, $tables, $shouldLog);
+        try {
+            $this->queueConfiguration->validateConfigured();
+        } catch (InvalidQueueConfigurationException $exception) {
+            $this->error($exception->getMessage());
+
+            return self::FAILURE;
+        }
+
         OptimizeTablesJob::dispatch($database, $tables, $shouldLog);
 
         $databaseName = $database === 'default' ? 'default database' : "database '{$database}'";
         $tableInfo = empty($tables) ? 'all tables' : 'specified tables ('.implode(', ', $tables).')';
 
         $this->info("Optimization job queued for {$tableInfo} in {$databaseName}");
+
+        return self::SUCCESS;
     }
 
     /**

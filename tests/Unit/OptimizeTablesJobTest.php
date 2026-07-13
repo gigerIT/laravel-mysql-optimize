@@ -17,12 +17,12 @@ describe('OptimizeTablesJob', function () {
         expect($job)->toBeInstanceOf(ShouldBeUnique::class);
     });
 
-    it('has correct default property values', function () {
+    it('has safe default property values', function () {
         $job = new OptimizeTablesJob;
 
-        expect($job->tries)->toBe(3)
+        expect($job->tries)->toBe(1)
             ->and($job->timeout)->toBe(3600)
-            ->and($job->uniqueFor)->toBe(3600)
+            ->and($job->uniqueFor)->toBe(0)
             ->and($job->backoff)->toBe(3600);
     });
 

@@ -28,7 +28,7 @@ describe('resolveDatabase', function () {
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `test_db`.`users`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $results = $this->action->execute(null);
@@ -51,7 +51,7 @@ describe('resolveDatabase', function () {
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `posts`')
+            ->with('OPTIMIZE TABLE `test_db`.`posts`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $results = $this->action->execute('default');
@@ -65,7 +65,7 @@ describe('resolveDatabase', function () {
         $queryBuilder->shouldReceive('selectRaw')->with('SCHEMA_NAME')->andReturnSelf();
         $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.SCHEMATA')->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('SCHEMA_NAME = ?', ['nonexistent_db'])->andReturnSelf();
-        $queryBuilder->shouldReceive('count')->andReturn(0);
+        $queryBuilder->shouldReceive('value')->with('SCHEMA_NAME')->andReturn(null);
 
         $this->action->execute('nonexistent_db');
     })->throws(DatabaseNotFoundException::class, "This database nonexistent_db doesn't exists.");
@@ -78,7 +78,7 @@ describe('resolveDatabase', function () {
         $queryBuilder->shouldReceive('selectRaw')->with('SCHEMA_NAME')->andReturnSelf();
         $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.SCHEMATA')->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('SCHEMA_NAME = ?', ['custom_db'])->andReturnSelf();
-        $queryBuilder->shouldReceive('count')->andReturn(1);
+        $queryBuilder->shouldReceive('value')->with('SCHEMA_NAME')->andReturn('custom_db');
 
         // resolveTables - get all tables
         $queryBuilder->shouldReceive('selectRaw')->with('TABLE_NAME')->andReturnSelf();
@@ -90,7 +90,7 @@ describe('resolveDatabase', function () {
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `custom_db`.`users`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $results = $this->action->execute('custom_db');
@@ -130,10 +130,14 @@ describe('resolveTables', function () {
         $this->builder->shouldReceive('newQuery')->andReturn($queryBuilder);
 
         // existsTables check
+        $queryBuilder->shouldReceive('selectRaw')->with('TABLE_NAME')->andReturnSelf();
         $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.TABLES')->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_SCHEMA = ?', ['test_db'])->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_NAME IN (?,?)', ['users', 'posts'])->andReturnSelf();
-        $queryBuilder->shouldReceive('count')->andReturn(2);
+        $queryBuilder->shouldReceive('get')->andReturn(collect([
+            (object) ['TABLE_NAME' => 'users'],
+            (object) ['TABLE_NAME' => 'posts'],
+        ]));
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')->andReturn([(object) ['Msg_text' => 'OK']]);
@@ -152,10 +156,11 @@ describe('resolveTables', function () {
         $this->builder->shouldReceive('newQuery')->andReturn($queryBuilder);
 
         // existsTables check - returns fewer than requested
+        $queryBuilder->shouldReceive('selectRaw')->with('TABLE_NAME')->andReturnSelf();
         $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.TABLES')->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_SCHEMA = ?', ['test_db'])->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_NAME IN (?)', ['nonexistent'])->andReturnSelf();
-        $queryBuilder->shouldReceive('count')->andReturn(0);
+        $queryBuilder->shouldReceive('get')->andReturn(collect());
 
         $this->action->execute(null, ['nonexistent']);
     })->throws(TableNotFoundException::class, "One or more tables provided doesn't exists.");
@@ -176,7 +181,7 @@ describe('execute', function () {
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `test_db`.`users`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $results = $this->action->execute(null);
@@ -230,7 +235,7 @@ describe('execute', function () {
 
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `test_db`.`users`')
             ->andReturn([(object) ['Msg_text' => 'Table does not support optimize']]);
 
         $results = $this->action->execute(null);
@@ -266,10 +271,14 @@ describe('getTableCount', function () {
         $this->builder->shouldReceive('newQuery')->andReturn($queryBuilder);
 
         // existsTables check
+        $queryBuilder->shouldReceive('selectRaw')->with('TABLE_NAME')->andReturnSelf();
         $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.TABLES')->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_SCHEMA = ?', ['test_db'])->andReturnSelf();
         $queryBuilder->shouldReceive('whereRaw')->with('TABLE_NAME IN (?,?)', ['users', 'posts'])->andReturnSelf();
-        $queryBuilder->shouldReceive('count')->andReturn(2);
+        $queryBuilder->shouldReceive('get')->andReturn(collect([
+            (object) ['TABLE_NAME' => 'users'],
+            (object) ['TABLE_NAME' => 'posts'],
+        ]));
 
         $count = $this->action->getTableCount(null, ['users', 'posts']);
 
@@ -281,7 +290,7 @@ describe('optimizeTable', function () {
     it('returns true when optimization succeeds', function () {
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `:memory:`.`users`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $result = $this->action->optimizeTable('users');
@@ -292,7 +301,7 @@ describe('optimizeTable', function () {
     it('returns false when optimization fails', function () {
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `:memory:`.`users`')
             ->andReturn([(object) ['Msg_text' => 'Table does not support optimize']]);
 
         $result = $this->action->optimizeTable('users');
@@ -303,7 +312,7 @@ describe('optimizeTable', function () {
     it('returns true when result contains OK among multiple messages', function () {
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `users`')
+            ->with('OPTIMIZE TABLE `:memory:`.`users`')
             ->andReturn([
                 (object) ['Msg_text' => 'Table does not support optimize, doing recreate + analyze instead'],
                 (object) ['Msg_text' => 'OK'],
@@ -317,7 +326,7 @@ describe('optimizeTable', function () {
     it('escapes backticks in table names before optimizing', function () {
         $this->builder->shouldReceive('getConnection')->andReturn($this->connection);
         $this->connection->shouldReceive('select')
-            ->with('OPTIMIZE TABLE `user``archive`')
+            ->with('OPTIMIZE TABLE `:memory:`.`user``archive`')
             ->andReturn([(object) ['Msg_text' => 'OK']]);
 
         $result = $this->action->optimizeTable('user`archive');

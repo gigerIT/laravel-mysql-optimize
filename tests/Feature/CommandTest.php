@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Queue;
+use MySQLOptimizer\Console\Commands\Command;
 use MySQLOptimizer\Jobs\OptimizeTablesJob;
 
 describe('db:optimize command', function () {
@@ -16,7 +18,7 @@ describe('db:optimize command', function () {
             $connection = Mockery::mock(Connection::class);
             $queryBuilder = Mockery::mock(Builder::class);
 
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -44,7 +46,7 @@ describe('db:optimize command', function () {
             $builder = Mockery::mock(Builder::class);
             $queryBuilder = Mockery::mock(Builder::class);
 
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -52,7 +54,7 @@ describe('db:optimize command', function () {
             $queryBuilder->shouldReceive('selectRaw')->with('SCHEMA_NAME')->andReturnSelf();
             $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.SCHEMATA')->andReturnSelf();
             $queryBuilder->shouldReceive('whereRaw')->andReturnSelf();
-            $queryBuilder->shouldReceive('count')->andReturn(0);
+            $queryBuilder->shouldReceive('value')->with('SCHEMA_NAME')->andReturn(null);
 
             $this->artisan('db:optimize', ['--database' => 'nonexistent_db'])
                 ->expectsOutputToContain('Optimization failed')
@@ -64,7 +66,7 @@ describe('db:optimize command', function () {
             $connection = Mockery::mock(Connection::class);
             $queryBuilder = Mockery::mock(Builder::class);
 
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -73,14 +75,17 @@ describe('db:optimize command', function () {
             $builder->shouldReceive('newQuery')->andReturn($queryBuilder);
 
             // existsTables check
+            $queryBuilder->shouldReceive('selectRaw')->with('TABLE_NAME')->andReturnSelf();
             $queryBuilder->shouldReceive('fromRaw')->with('INFORMATION_SCHEMA.TABLES')->andReturnSelf();
             $queryBuilder->shouldReceive('whereRaw')->with('TABLE_SCHEMA = ?', ['test_db'])->andReturnSelf();
             $queryBuilder->shouldReceive('whereRaw')->with('TABLE_NAME IN (?)', ['users'])->andReturnSelf();
-            $queryBuilder->shouldReceive('count')->andReturn(1);
+            $queryBuilder->shouldReceive('get')->andReturn(collect([
+                (object) ['TABLE_NAME' => 'users'],
+            ]));
 
             $builder->shouldReceive('getConnection')->andReturn($connection);
             $connection->shouldReceive('select')
-                ->with('OPTIMIZE TABLE `users`')
+                ->with('OPTIMIZE TABLE `test_db`.`users`')
                 ->andReturn([(object) ['Msg_text' => 'OK']]);
 
             $this->artisan('db:optimize', ['--table' => ['users']])
@@ -90,11 +95,15 @@ describe('db:optimize command', function () {
     });
 
     describe('queued execution', function () {
+        beforeEach(function () {
+            config(['queue.connections.sync' => ['driver' => 'sync']]);
+        });
+
         it('dispatches job and shows confirmation message', function () {
-            \Illuminate\Support\Facades\Queue::fake();
+            Queue::fake();
 
             $builder = Mockery::mock(Builder::class);
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -102,14 +111,14 @@ describe('db:optimize command', function () {
                 ->expectsOutputToContain('Optimization job queued')
                 ->assertSuccessful();
 
-            \Illuminate\Support\Facades\Queue::assertPushed(OptimizeTablesJob::class);
+            Queue::assertPushed(OptimizeTablesJob::class);
         });
 
         it('dispatches job with correct parameters', function () {
-            \Illuminate\Support\Facades\Queue::fake();
+            Queue::fake();
 
             $builder = Mockery::mock(Builder::class);
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -120,7 +129,7 @@ describe('db:optimize command', function () {
                 '--no-log' => true,
             ])->assertSuccessful();
 
-            \Illuminate\Support\Facades\Queue::assertPushed(OptimizeTablesJob::class, function ($job) {
+            Queue::assertPushed(OptimizeTablesJob::class, function ($job) {
                 return $job->database === 'my_db'
                     && $job->tables === ['users', 'posts']
                     && $job->shouldLog === false;
@@ -128,10 +137,10 @@ describe('db:optimize command', function () {
         });
 
         it('shows table info in confirmation for specific tables', function () {
-            \Illuminate\Support\Facades\Queue::fake();
+            Queue::fake();
 
             $builder = Mockery::mock(Builder::class);
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
@@ -144,16 +153,100 @@ describe('db:optimize command', function () {
         });
 
         it('shows "all tables" in confirmation when no tables specified', function () {
-            \Illuminate\Support\Facades\Queue::fake();
+            Queue::fake();
 
             $builder = Mockery::mock(Builder::class);
-            $this->app->when(\MySQLOptimizer\Console\Commands\Command::class)
+            $this->app->when(Command::class)
                 ->needs(Builder::class)
                 ->give(fn () => $builder);
 
             $this->artisan('db:optimize', ['--queued' => true])
                 ->expectsOutputToContain('all tables')
                 ->assertSuccessful();
+        });
+
+        it('does not dispatch with unsafe queue timeout configuration', function () {
+            Queue::fake();
+            config([
+                'queue.default' => 'redis',
+                'queue.connections.redis' => ['driver' => 'redis', 'retry_after' => 180],
+                'mysql-optimizer.queue.timeout' => 3600,
+            ]);
+
+            $builder = Mockery::mock(Builder::class);
+            $this->app->when(Command::class)
+                ->needs(Builder::class)
+                ->give(fn () => $builder);
+
+            $this->artisan('db:optimize', ['--queued' => true])
+                ->expectsOutputToContain('retry_after [180]')
+                ->assertFailed();
+
+            Queue::assertNothingPushed();
+        });
+
+        it('dispatches onto configured connection and queue', function () {
+            Queue::fake();
+            config(['mysql-optimizer.queue' => [
+                'connection' => 'optimizer',
+                'name' => 'mysql-optimizer',
+                'timeout' => 100,
+                'tries' => 1,
+                'backoff' => 60,
+                'unique_for' => 0,
+            ]]);
+            config(['queue.connections.optimizer' => ['driver' => 'redis', 'retry_after' => 110]]);
+
+            $builder = Mockery::mock(Builder::class);
+            $this->app->when(Command::class)
+                ->needs(Builder::class)
+                ->give(fn () => $builder);
+
+            $this->artisan('db:optimize', ['--queued' => true])->assertSuccessful();
+
+            Queue::assertPushed(OptimizeTablesJob::class, function ($job) {
+                return $job->connection === 'optimizer' && $job->queue === 'mysql-optimizer';
+            });
+        });
+
+        it('does not dispatch with an invalid configured queue name', function (mixed $name) {
+            Queue::fake();
+            config(['mysql-optimizer.queue.name' => $name]);
+
+            $builder = Mockery::mock(Builder::class);
+            $this->app->when(Command::class)
+                ->needs(Builder::class)
+                ->give(fn () => $builder);
+
+            $this->artisan('db:optimize', ['--queued' => true])
+                ->expectsOutputToContain('queue name')
+                ->assertFailed();
+
+            Queue::assertNothingPushed();
+        })->with([
+            'empty string' => [''],
+            'array' => [[]],
+            'object' => [(object) ['name' => 'mysql-optimizer']],
+        ]);
+
+        it('does not dispatch per table mode without explicit dedicated routing', function () {
+            Queue::fake();
+            config([
+                'mysql-optimizer.queue.per_table' => true,
+                'mysql-optimizer.queue.connection' => null,
+                'mysql-optimizer.queue.name' => null,
+            ]);
+
+            $builder = Mockery::mock(Builder::class);
+            $this->app->when(Command::class)
+                ->needs(Builder::class)
+                ->give(fn () => $builder);
+
+            $this->artisan('db:optimize', ['--queued' => true])
+                ->expectsOutputToContain('dedicated one-worker queue')
+                ->assertFailed();
+
+            Queue::assertNothingPushed();
         });
     });
 });

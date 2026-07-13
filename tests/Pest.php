@@ -1,5 +1,9 @@
 <?php
 
+use Tests\Integration\IntegrationTestCase;
+use Tests\RedisIntegration\RedisIntegrationTestCase;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,8 +15,9 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)->in('Feature');
-pest()->extend(Tests\Integration\IntegrationTestCase::class)->in('Integration');
+pest()->extend(TestCase::class)->in('Feature');
+pest()->extend(IntegrationTestCase::class)->in('Integration');
+pest()->extend(RedisIntegrationTestCase::class)->in('RedisIntegration');
 
 /*
 |--------------------------------------------------------------------------

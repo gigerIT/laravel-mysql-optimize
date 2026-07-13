@@ -83,8 +83,56 @@ jobs:
           MYSQL_USERNAME: root
           MYSQL_PASSWORD: password
 
+  redis-integration-test:
+    runs-on: ubuntu-latest
+    name: Redis Integration
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=2s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: redis, pcntl
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+        with:
+          composer-options: --prefer-dist
+
+      - name: Wait for Redis
+        run: |
+          for attempt in {1..30}; do
+            if redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Run Redis Integration Tests
+        run: composer test:redis-integration
+        env:
+          REDIS_INTEGRATION: 1
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+
   release-please:
-    needs: [test, integration-test]
+    needs: [test, integration-test, redis-integration-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
