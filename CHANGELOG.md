@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.5.1...v1.6.0) (2026-07-13)
+
+
+### Features
+
+* **queue:** harden optimizer execution ([f7cc150](https://github.com/gigerIT/laravel-mysql-optimize/commit/f7cc150160c9090074aa6fbc117ba21ada7d0e31))
+
+
+### Bug Fixes
+
+* **ci:** probe Redis with PhpRedis ([078951c](https://github.com/gigerIT/laravel-mysql-optimize/commit/078951c5e4ab35f2f24462087ffaa4f7feb3f426))
+
 ## [1.5.1](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.5.0...v1.5.1) (2026-05-06)
 
 
