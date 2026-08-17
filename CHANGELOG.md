@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.6.0...v1.6.1) (2026-07-23)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump actions/checkout from 6 to 7 ([7cce45d](https://github.com/gigerIT/laravel-mysql-optimize/commit/7cce45d16578beadedc1a26a6566d350275ae02b))
+
 ## [1.6.0](https://github.com/gigerIT/laravel-mysql-optimize/compare/v1.5.1...v1.6.0) (2026-07-13)
 
 
