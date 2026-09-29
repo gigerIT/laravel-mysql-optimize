@@ -34,8 +34,6 @@ class ServiceProvider extends AbstractServiceProvider
 
         if ($this->app instanceof LaravelApplication && $this->app->runningInConsole()) {
             $this->publishes([$source => config_path("$this->config.php")]);
-        } elseif ($this->app instanceof LumenApplication) {
-            $this->app->configure($this->config);
         }
 
         $this->mergeConfigFrom($source, $this->config);
