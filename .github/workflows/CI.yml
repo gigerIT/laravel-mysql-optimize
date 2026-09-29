@@ -38,6 +38,10 @@ jobs:
         with:
           composer-options: --prefer-dist
 
+      - name: Run PHPStan
+        if: matrix.php == '8.4'
+        run: composer test:types
+
       - name: Run Tests
         run: vendor/bin/pest --testsuite Unit,Feature --colors=always
 
