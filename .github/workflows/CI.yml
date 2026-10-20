@@ -9,8 +9,7 @@ on:
       - main
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   test:
@@ -142,6 +141,9 @@ jobs:
     needs: [test, integration-test, redis-integration-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Release Please
