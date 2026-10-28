@@ -205,7 +205,7 @@ HTTP API.
   Never commit real `.env` or creds.
 - Integration env: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`,
   `MYSQL_USERNAME`, `MYSQL_PASSWORD`.
-- CI release auth uses `secrets.GITHUB_TOKEN`.
+- Release Please uses `secrets.RELEASE_PLEASE_TOKEN` so release PRs trigger checks automatically.
 - Dependabot checks Composer and GitHub Actions weekly.
 - Run dependency audit when deps change:
 
